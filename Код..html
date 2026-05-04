@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Стилистический анализ текста — 4 дня</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0e0f14;
+    --surface: #16181f;
+    --surface2: #1e2029;
+    --border: #2a2d3a;
+    --accent1: #e8c96b;
+    --accent2: #7eb8f7;
+    --accent3: #a78bfa;
+    --accent4: #6ee7b7;
+    --text: #e8eaf0;
+    --muted: #8b8fa8;
+    --danger: #f87171;
+    --success: #4ade80;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NAV TABS */
+  .nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    overflow-x: auto;
+  }
+
+  .nav-tab {
+    padding: 18px 28px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all .2s;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .nav-tab:hover { color: var(--text); }
+
+  .nav-tab.active {
+    color: var(--accent1);
+    border-bottom-color: var(--accent1);
+  }
+
+  .day-badge {
+    display: inline-block;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 22px;
+    margin-right: 8px;
+  }
+
+  /* PANELS */
+  .panel { display: none; padding: 40px 48px 80px; max-width: 900px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 900;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 36px;
+    font-weight: 300;
+    letter-spacing: .03em;
+  }
+
+  /* QUESTION CARD */
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    transition: border-color .2s;
+  }
+
+  .q-card.answered { border-color: var(--border); }
+
+  .q-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    letter-spacing: .1em;
+  }
+
+  .q-text {
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  .q-text strong { color: var(--accent1); }
+
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .option {
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all .15s;
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .option:hover { border-color: var(--accent2); color: var(--accent2); }
+  .option.correct { border-color: var(--success); background: rgba(74,222,128,.1); color: var(--success); }
+  .option.wrong { border-color: var(--danger); background: rgba(248,113,113,.1); color: var(--danger); }
+  .option.reveal { border-color: var(--success); background: rgba(74,222,128,.05); color: var(--success); opacity: .6; }
+  .option.disabled { pointer-events: none; }
+
+  .feedback {
+    margin-top: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+    display: none;
+    padding: 12px 16px;
+    border-left: 3px solid var(--accent3);
+    background: rgba(167,139,250,.06);
+    border-radius: 0 6px 6px 0;
+  }
+
+  .feedback.show { display: block; }
+
+  /* TEXT EXCERPT */
+  .text-block {
+    background: var(--surface2);
+    border-left: 4px solid var(--accent2);
+    border-radius: 0 8px 8px 0;
+    padding: 20px 24px;
+    font-size: 14px;
+    line-height: 1.8;
+    margin-bottom: 20px;
+    font-style: italic;
+    color: #c8cce0;
+  }
+
+  /* EGE FORMAT */
+  .ege-text {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 28px;
+    font-size: 14px;
+    line-height: 1.9;
+    margin-bottom: 24px;
+    color: #d0d4e8;
+  }
+
+  .ege-task {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 16px;
+  }
+
+  .ege-task-label {
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent3);
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .ege-q {
+    font-size: 14.5px;
+    line-height: 1.7;
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+
+  .ege-options { display: flex; flex-direction: column; gap: 8px; }
+
+  .ege-option {
+    padding: 11px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13.5px;
+    background: var(--surface2);
+    color: var(--text);
+    transition: all .15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .ege-option:hover { border-color: var(--accent1); }
+  .ege-opt-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    min-width: 18px;
+    padding-top: 1px;
+  }
+  .ege-option.correct { border-color: var(--success); background: rgba(74,222,128,.08); }
+  .ege-option.wrong   { border-color: var(--danger);  background: rgba(248,113,113,.08); }
+  .ege-option.reveal  { border-color: var(--success); opacity:.5; }
+  .ege-option.disabled { pointer-events: none; }
+
+  .check-btn {
+    margin-top: 18px;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent1);
+    color: #0e0f14;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: .05em;
+    cursor: pointer;
+    transition: opacity .2s;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  .check-btn:hover { opacity: .85; }
+  .check-btn:disabled { opacity: .4; cursor: default; }
+
+  /* SCORE */
+  .score-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 32px;
+  }
+
+  .score-label { font-size: 12px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .score-val { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 700; color: var(--accent1); }
+
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-right: 6px;
+  }
+
+  .tag-sci   { background: rgba(126,184,247,.15); color: var(--accent2); }
+  .tag-pub   { background: rgba(232,201,107,.15); color: var(--accent1); }
+  .tag-art   { background: rgba(167,139,250,.15); color: var(--accent3); }
+  .tag-biz   { background: rgba(110,231,183,.15); color: var(--accent4); }
+
+  @media (max-width: 640px) {
+    .panel { padding: 24px 20px; }
+    .options { grid-template-columns: 1fr; }
+    .nav-tab { padding: 14px 18px; font-size: 11px; }
+  }
+
+  /* REGISTRATION OVERLAY */
+  #reg-overlay {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .reg-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 44px;
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+  }
+  .reg-logo { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
+  .reg-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 900; margin-bottom: 8px; line-height: 1.2; }
+  .reg-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; }
+  .reg-input { width: 100%; padding: 14px 18px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px; color: var(--text); font-size: 15px; font-family: 'IBM Plex Sans', sans-serif; margin-bottom: 12px; outline: none; transition: border-color .2s; }
+  .reg-input:focus { border-color: var(--accent1); }
+  .reg-input::placeholder { color: var(--muted); }
+  .reg-btn { width: 100%; padding: 14px; background: var(--accent1); color: #0e0f14; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; letter-spacing: .04em; transition: opacity .2s; margin-top: 8px; }
+  .reg-btn:hover { opacity: .85; }
+  .reg-btn:disabled { opacity: .4; cursor: default; }
+  .submit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin: 0 48px 20px; }
+  .submit-info { flex: 1; min-width: 200px; }
+  .submit-info strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  .submit-info span { font-size: 13px; color: var(--muted); }
+  .submit-btn { padding: 12px 28px; background: var(--accent4); color: #0e0f14; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; letter-spacing: .04em; transition: opacity .2s; white-space: nowrap; }
+  .submit-btn:hover { opacity: .85; }
+  .submit-btn:disabled { opacity: .5; cursor: default; }
+  .submit-status { font-size: 13px; margin-top: 10px; display: none; }
+</style>
+</head>
+<body>
+
+<!-- REGISTRATION OVERLAY -->
+<div id="reg-overlay">
+  <div class="reg-box">
+    <div class="reg-logo">Задание 03 &middot; ЕГЭ Русский язык</div>
+    <div class="reg-title">Стилистический<br>анализ текста</div>
+    <p class="reg-sub">Введи своё имя и класс, чтобы результаты сохранились у учителя в Notion.</p>
+    <input class="reg-input" id="reg-name" placeholder="Имя и Фамилия" autocomplete="off" />
+    <input class="reg-input" id="reg-class" placeholder="Класс (например, 11А)" autocomplete="off" />
+    <button class="reg-btn" id="reg-btn" onclick="startSession()">Начать тренажёр &rarr;</button>
+  </div>
+</div>
+
+<!-- SUBMIT CARD (shown after all days done) -->
+<div id="submit-wrap" style="display:none">
+  <div class="submit-card">
+    <div class="submit-info">
+      <strong id="submit-name-label"></strong>
+      <span>Все вопросы отвечены — зафиксируй результат!</span>
+    </div>
+    <div>
+      <button class="submit-btn" id="submit-btn" onclick="sendToNotion()">📋 Скопировать результат</button>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Результат придёт учителю мгновенно</div>
+    </div>
+  </div>
+</div>
+
+<nav class="nav">
+  <div class="nav-tab active" onclick="showDay(1,this)">
+    <span class="day-badge" style="background:rgba(232,201,107,.2);color:#e8c96b">1</span>День 1
+  </div>
+  <div class="nav-tab" onclick="showDay(2,this)">
+    <span class="day-badge" style="background:rgba(126,184,247,.2);color:#7eb8f7">2</span>День 2
+  </div>
+  <div class="nav-tab" onclick="showDay(3,this)">
+    <span class="day-badge" style="background:rgba(167,139,250,.2);color:#a78bfa">3</span>День 3 — ЕГЭ
+  </div>
+  <div class="nav-tab" onclick="showDay(4,this)">
+    <span class="day-badge" style="background:rgba(110,231,183,.2);color:#6ee7b7">4</span>День 4 — ЕГЭ
+  </div>
+</nav>
+
+<!-- ===================== ДЕНЬ 1 ===================== -->
+<div class="panel active" id="day1">
+  <div class="score-bar">
+    <div>
+      <div class="score-label">Счёт</div>
+      <div class="score-val" id="score1">0 / 6</div>
+    </div>
+    <div style="margin-left:auto;font-size:13px;color:var(--muted)">Выберите правильный стиль речи</div>
+  </div>
+  <h1>День 1</h1>
+  <p class="subtitle">Опросы: определи стиль по характеристикам</p>
+
+  <!-- Q1 -->
+  <div class="q-card" id="d1q1">
+    <div class="q-num">ВОПРОС 01</div>
+    <div class="q-text">К какому стилю речи относятся следующие характеристики?<br>
+      <strong>Объективность, бесстрастность, использование терминов, абстрактной лексики, сложные синтаксические конструкции, отсутствие эмоциональных оценок.</strong>
+    </div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d1q1','Научный',this,'d1q1fb','Верно! Объективность и терминология — ключевые признаки научного стиля.')">Научный</div>
+      <div class="option" onclick="checkQ('d1q1','Научный',this,'d1q1fb','Верно! Объективность и терминология — ключевые признаки научного стиля.')">Публицистический</div>
+      <div class="option" onclick="checkQ('d1q1','Научный',this,'d1q1fb','Верно! Объективность и терминология — ключевые признаки научного стиля.')">Художественный</div>
+      <div class="option" onclick="checkQ('d1q1','Научный',this,'d1q1fb','Верно! Объективность и терминология — ключевые признаки научного стиля.')">Официально-деловой</div>
+    </div>
+    <div class="feedback" id="d1q1fb"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="q-card" id="d1q2">
+    <div class="q-num">ВОПРОС 02</div>
+    <div class="q-text">К какому стилю речи относятся следующие характеристики?<br>
+      <strong>Стандартизированность изложения, канцелярские штампы, отглагольные существительные, производные предлоги, выражение долженствования, неэмоциональность.</strong>
+    </div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d1q2','Официально-деловой',this,'d1q2fb','Верно! Канцеляризмы и долженствование — маркеры официально-делового стиля.')">Научный</div>
+      <div class="option" onclick="checkQ('d1q2','Официально-деловой',this,'d1q2fb','Верно! Канцеляризмы и долженствование — маркеры официально-делового стиля.')">Официально-деловой</div>
+      <div class="option" onclick="checkQ('d1q2','Официально-деловой',this,'d1q2fb','Верно! Канцеляризмы и долженствование — маркеры официально-делового стиля.')">Публицистический</div>
+      <div class="option" onclick="checkQ('d1q2','Официально-деловой',this,'d1q2fb','Верно! Канцеляризмы и долженствование — маркеры официально-делового стиля.')">Разговорный</div>
+    </div>
+    <div class="feedback" id="d1q2fb"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="q-card" id="d1q3">
+    <div class="q-num">ВОПРОС 03</div>
+    <div class="q-text">К какому стилю речи относятся следующие характеристики?<br>
+      <strong>Образность, эмоциональность, оценочность, риторические вопросы и восклицания, общественная тематика, воздействие на читателя.</strong>
+    </div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d1q3','Публицистический',this,'d1q3fb','Верно! Эмоциональность в сочетании с общественной тематикой — признаки публицистики.')">Официально-деловой</div>
+      <div class="option" onclick="checkQ('d1q3','Публицистический',this,'d1q3fb','Верно! Эмоциональность в сочетании с общественной тематикой — признаки публицистики.')">Научный</div>
+      <div class="option" onclick="checkQ('d1q3','Публицистический',this,'d1q3fb','Верно! Эмоциональность в сочетании с общественной тематикой — признаки публицистики.')">Публицистический</div>
+      <div class="option" onclick="checkQ('d1q3','Публицистический',this,'d1q3fb','Верно! Эмоциональность в сочетании с общественной тематикой — признаки публицистики.')">Художественный</div>
+    </div>
+    <div class="feedback" id="d1q3fb"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="q-card" id="d1q4">
+    <div class="q-num">ВОПРОС 04</div>
+    <div class="q-text">К какому стилю речи относятся следующие характеристики?<br>
+      <strong>Образность, наличие вымысла, использование тропов и фигур речи, слова в переносных значениях, субъективность оценок, эстетическое воздействие.</strong>
+    </div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d1q4','Художественный',this,'d1q4fb','Верно! Использование тропов, вымысел и эстетическое воздействие — черты художественного стиля.')">Научный</div>
+      <div class="option" onclick="checkQ('d1q4','Художественный',this,'d1q4fb','Верно! Использование тропов, вымысел и эстетическое воздействие — черты художественного стиля.')">Публицистический</div>
+      <div class="option" onclick="checkQ('d1q4','Художественный',this,'d1q4fb','Верно! Использование тропов, вымысел и эстетическое воздействие — черты художественного стиля.')">Разговорный</div>
+      <div class="option" onclick="checkQ('d1q4','Художественный',this,'d1q4fb','Верно! Использование тропов, вымысел и эстетическое воздействие — черты художественного стиля.')">Художественный</div>
+    </div>
+    <div class="feedback" id="d1q4fb"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="q-card" id="d1q5">
+    <div class="q-num">ВОПРОС 05</div>
+    <div class="q-text">Какой тип речи преобладает в научном стиле?
+    </div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d1q5','Рассуждение и описание',this,'d1q5fb','Верно! В научном стиле используются рассуждение (доказательство) и описание (характеристика явлений).')">Повествование</div>
+      <div class="option" onclick="checkQ('d1q5','Рассуждение и описание',this,'d1q5fb','Верно! В научном стиле используются рассуждение (доказательство) и описание (характеристика явлений).')">Рассуждение и описание</div>
+      <div class="option" onclick="checkQ('d1q5','Рассуждение и описание',this,'d1q5fb','Верно! В научном стиле используются рассуждение (доказательство) и описание (характеристика явлений).')">Только описание</div>
+      <div class="option" onclick="checkQ('d1q5','Рассуждение и описание',this,'d1q5fb','Верно! В научном стиле используются рассуждение (доказательство) и описание (характеристика явлений).')">Диалог</div>
+    </div>
+    <div class="feedback" id="d1q5fb"></div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="q-card" id="d1q6">
+    <div class="q-num">ВОПРОС 06</div>
+    <div class="q-text">Какая лексика характерна для официально-делового стиля?
+    </div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d1q6','Канцелярские штампы и отглагольные существительные',this,'d1q6fb','Верно! Клише вроде «в соответствии с», «во исполнение», отглагольные существительные — визитная карточка официально-делового стиля.')">Тропы и метафоры</div>
+      <div class="option" onclick="checkQ('d1q6','Канцелярские штампы и отглагольные существительные',this,'d1q6fb','Верно! Клише вроде «в соответствии с», «во исполнение», отглагольные существительные — визитная карточка официально-делового стиля.')">Разговорная лексика и фразеологизмы</div>
+      <div class="option" onclick="checkQ('d1q6','Канцелярские штампы и отглагольные существительные',this,'d1q6fb','Верно! Клише вроде «в соответствии с», «во исполнение», отглагольные существительные — визитная карточка официально-делового стиля.')">Канцелярские штампы и отглагольные существительные</div>
+      <div class="option" onclick="checkQ('d1q6','Канцелярские штампы и отглагольные существительные',this,'d1q6fb','Верно! Клише вроде «в соответствии с», «во исполнение», отглагольные существительные — визитная карточка официально-делового стиля.')">Термины и символы</div>
+    </div>
+    <div class="feedback" id="d1q6fb"></div>
+  </div>
+</div>
+
+<!-- ===================== ДЕНЬ 2 ===================== -->
+<div class="panel" id="day2">
+  <div class="score-bar">
+    <div>
+      <div class="score-label">Счёт</div>
+      <div class="score-val" id="score2">0 / 5</div>
+    </div>
+    <div style="margin-left:auto;font-size:13px;color:var(--muted)">Определи стиль по тексту</div>
+  </div>
+  <h1>День 2</h1>
+  <p class="subtitle">Прочитай отрывок и определи его стиль</p>
+
+  <!-- T1 -->
+  <div class="q-card" id="d2q1">
+    <div class="q-num">ТЕКСТ 01</div>
+    <div class="text-block">
+      «Фотосинтез — процесс образования органических веществ из углекислого газа и воды с использованием световой энергии. Он протекает в хлоропластах растительных клеток, содержащих пигмент хлорофилл. В ходе световой фазы молекулы воды расщепляются с выделением молекулярного кислорода.»
+    </div>
+    <div class="q-text">Определи стиль этого текста.</div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d2q1','Научный',this,'d2q1fb','Верно! Терминология (хлоропласт, хлорофилл, световая фаза), точность и объективность — признаки научного стиля.')">Публицистический</div>
+      <div class="option" onclick="checkQ('d2q1','Научный',this,'d2q1fb','Верно! Терминология (хлоропласт, хлорофилл, световая фаза), точность и объективность — признаки научного стиля.')">Научный</div>
+      <div class="option" onclick="checkQ('d2q1','Научный',this,'d2q1fb','Верно! Терминология (хлоропласт, хлорофилл, световая фаза), точность и объективность — признаки научного стиля.')">Художественный</div>
+      <div class="option" onclick="checkQ('d2q1','Научный',this,'d2q1fb','Верно! Терминология (хлоропласт, хлорофилл, световая фаза), точность и объективность — признаки научного стиля.')">Официально-деловой</div>
+    </div>
+    <div class="feedback" id="d2q1fb"></div>
+  </div>
+
+  <!-- T2 -->
+  <div class="q-card" id="d2q2">
+    <div class="q-num">ТЕКСТ 02</div>
+    <div class="text-block">
+      «На основании приказа №47 от 12 мая 2024 года и в соответствии с Положением об аттестации работников настоящим уведомляется о проведении плановой аттестации сотрудников отдела кадров в срок до 30 июня 2024 года.»
+    </div>
+    <div class="q-text">Определи стиль этого текста.</div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d2q2','Официально-деловой',this,'d2q2fb','Верно! «На основании», «в соответствии с», «настоящим уведомляется» — типичные канцеляризмы официально-делового стиля.')">Научный</div>
+      <div class="option" onclick="checkQ('d2q2','Официально-деловой',this,'d2q2fb','Верно! «На основании», «в соответствии с», «настоящим уведомляется» — типичные канцеляризмы официально-делового стиля.')">Публицистический</div>
+      <div class="option" onclick="checkQ('d2q2','Официально-деловой',this,'d2q2fb','Верно! «На основании», «в соответствии с», «настоящим уведомляется» — типичные канцеляризмы официально-делового стиля.')">Официально-деловой</div>
+      <div class="option" onclick="checkQ('d2q2','Официально-деловой',this,'d2q2fb','Верно! «На основании», «в соответствии с», «настоящим уведомляется» — типичные канцеляризмы официально-делового стиля.')">Разговорный</div>
+    </div>
+    <div class="feedback" id="d2q2fb"></div>
+  </div>
+
+  <!-- T3 -->
+  <div class="q-card" id="d2q3">
+    <div class="q-num">ТЕКСТ 03</div>
+    <div class="text-block">
+      «Берёза стояла у обочины — одинокая, растрёпанная осенним ветром. Её листья — золотые монеты — разлетались в разные стороны, словно она торопилась раздать последние сбережения перед зимним сном.»
+    </div>
+    <div class="q-text">Определи стиль этого текста.</div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d2q3','Художественный',this,'d2q3fb','Верно! Метафора (листья — монеты), олицетворение (торопилась раздать), образность — черты художественного стиля.')">Научный</div>
+      <div class="option" onclick="checkQ('d2q3','Художественный',this,'d2q3fb','Верно! Метафора (листья — монеты), олицетворение (торопилась раздать), образность — черты художественного стиля.')">Публицистический</div>
+      <div class="option" onclick="checkQ('d2q3','Художественный',this,'d2q3fb','Верно! Метафора (листья — монеты), олицетворение (торопилась раздать), образность — черты художественного стиля.')">Официально-деловой</div>
+      <div class="option" onclick="checkQ('d2q3','Художественный',this,'d2q3fb','Верно! Метафора (листья — монеты), олицетворение (торопилась раздать), образность — черты художественного стиля.')">Художественный</div>
+    </div>
+    <div class="feedback" id="d2q3fb"></div>
+  </div>
+
+  <!-- T4 -->
+  <div class="q-card" id="d2q4">
+    <div class="q-num">ТЕКСТ 04</div>
+    <div class="text-block">
+      «Разве можно молчать, когда страна нуждается в честных людях? Коррупция разъедает общество изнутри. Каждый из нас обязан сделать выбор: стать частью системы или бороться за справедливость. Время действовать — сейчас!»
+    </div>
+    <div class="q-text">Определи стиль этого текста.</div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d2q4','Публицистический',this,'d2q4fb','Верно! Риторический вопрос, призывность, оценочность, общественная тематика — признаки публицистического стиля.')">Художественный</div>
+      <div class="option" onclick="checkQ('d2q4','Публицистический',this,'d2q4fb','Верно! Риторический вопрос, призывность, оценочность, общественная тематика — признаки публицистического стиля.')">Научный</div>
+      <div class="option" onclick="checkQ('d2q4','Публицистический',this,'d2q4fb','Верно! Риторический вопрос, призывность, оценочность, общественная тематика — признаки публицистического стиля.')">Публицистический</div>
+      <div class="option" onclick="checkQ('d2q4','Публицистический',this,'d2q4fb','Верно! Риторический вопрос, призывность, оценочность, общественная тематика — признаки публицистического стиля.')">Официально-деловой</div>
+    </div>
+    <div class="feedback" id="d2q4fb"></div>
+  </div>
+
+  <!-- T5 — СЛОЖНЫЙ: смешанный -->
+  <div class="q-card" id="d2q5">
+    <div class="q-num">ТЕКСТ 05 ★ Повышенный уровень</div>
+    <div class="text-block">
+      «Климатический кризис — не просто научная проблема, это моральный вызов нашему поколению. Учёные зафиксировали рост средней температуры на 1,1°C за последние сто лет. Но цифры холодны, а планета — горит. Неужели мы оставим детям выжженную землю?»
+    </div>
+    <div class="q-text">Этот текст совмещает несколько стилей. Какой из вариантов точнее всего описывает его?</div>
+    <div class="options">
+      <div class="option" onclick="checkQ('d2q5','Публицистический с элементами научного',this,'d2q5fb','Верно! Текст публицистический: оценочность, риторический вопрос, призыв. Но включает научные данные (1,1°C) — заимствование из научного стиля, что типично для публицистики.')">Чисто научный</div>
+      <div class="option" onclick="checkQ('d2q5','Публицистический с элементами научного',this,'d2q5fb','Верно! Текст публицистический: оценочность, риторический вопрос, призыв. Но включает научные данные (1,1°C) — заимствование из научного стиля, что типично для публицистики.')">Художественный</div>
+      <div class="option" onclick="checkQ('d2q5','Публицистический с элементами научного',this,'d2q5fb','Верно! Текст публицистический: оценочность, риторический вопрос, призыв. Но включает научные данные (1,1°C) — заимствование из научного стиля, что типично для публицистики.')">Публицистический с элементами научного</div>
+      <div class="option" onclick="checkQ('d2q5','Публицистический с элементами научного',this,'d2q5fb','Верно! Текст публицистический: оценочность, риторический вопрос, призыв. Но включает научные данные (1,1°C) — заимствование из научного стиля, что типично для публицистики.')">Официально-деловой</div>
+    </div>
+    <div class="feedback" id="d2q5fb"></div>
+  </div>
+</div>
+
+<!-- ===================== ДЕНЬ 3 ===================== -->
+<div class="panel" id="day3">
+  <div class="score-bar">
+    <div>
+      <div class="score-label">Баллы</div>
+      <div class="score-val" id="score3">0 / 2</div>
+    </div>
+    <div style="margin-left:auto;font-size:13px;color:var(--muted)">Формат ЕГЭ · Задание 3</div>
+  </div>
+  <h1>День 3 — Формат ЕГЭ</h1>
+  <p class="subtitle">Прочитай текст и выполни задания в формате задания №3</p>
+
+  <div class="ege-text" id="ege3text">
+    <p style="margin-bottom:8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-style:normal">(1) Проза Чехова — это особый мир. (2) Писатель почти никогда не говорит прямо: он намекает, недоговаривает, предоставляя читателю самому достроить картину. (3) Эта техника «подводного течения» позволяет передать то, что словами не выразить. (4) За каждой репликой — целая судьба, за каждой деталью — скрытая боль или несостоявшаяся мечта. (5) Рассказ «Студент» — один из ключевых текстов писателя: в нём через простую беседу у костра открывается тема связи времён и непрерывности человеческого страдания и радости.</p>
+  </div>
+
+  <div class="ege-task">
+    <div class="ege-task-label">Задание 3А</div>
+    <div class="ege-q">Укажи <strong>все</strong> верные утверждения о данном тексте. Запиши цифры ответов.</div>
+    <div class="ege-options" id="ege3a-opts">
+      <div class="ege-option" onclick="toggleEge('ege3a','1',this)">
+        <span class="ege-opt-num">1</span>Текст написан в научном стиле: в нём присутствуют термины и объективное изложение.
+      </div>
+      <div class="ege-option" onclick="toggleEge('ege3a','2',this)">
+        <span class="ege-opt-num">2</span>Текст относится к публицистическому стилю: в нём есть авторская оценка и образные выражения.
+      </div>
+      <div class="ege-option" onclick="toggleEge('ege3a','3',this)">
+        <span class="ege-opt-num">3</span>В тексте используется метафора: «подводное течение».
+      </div>
+      <div class="ege-option" onclick="toggleEge('ege3a','4',this)">
+        <span class="ege-opt-num">4</span>Предложение 4 содержит ряд уточняющих конструкций, построенных по схеме «за X — Y».
+      </div>
+      <div class="ege-option" onclick="toggleEge('ege3a','5',this)">
+        <span class="ege-opt-num">5</span>Основной тип речи в тексте — описание, в котором автор перечисляет предметы и явления без оценки.
+      </div>
+    </div>
+    <button class="check-btn" onclick="checkEge('ege3a',['2','3','4'],'ege3a-fb')">Проверить</button>
+    <div class="feedback" id="ege3a-fb"></div>
+  </div>
+
+  <div class="ege-task">
+    <div class="ege-task-label">Задание 3Б</div>
+    <div class="ege-q">Выбери одно верное утверждение о стиле и типе речи текста.</div>
+    <div class="ege-options">
+      <div class="ege-option" onclick="checkEgeSingle('ege3b','Текст публицистического стиля, основной тип речи — рассуждение.',this,'ege3b-fb','Верно! Авторская оценка, образность, рассуждение о технике Чехова — всё это признаки публицистического стиля. Преобладает рассуждение.')">
+        <span class="ege-opt-num">1</span>Текст научного стиля, основной тип речи — описание.
+      </div>
+      <div class="ege-option" onclick="checkEgeSingle('ege3b','Текст публицистического стиля, основной тип речи — рассуждение.',this,'ege3b-fb','Верно! Авторская оценка, образность, рассуждение о технике Чехова — всё это признаки публицистического стиля. Преобладает рассуждение.')">
+        <span class="ege-opt-num">2</span>Текст публицистического стиля, основной тип речи — рассуждение.
+      </div>
+      <div class="ege-option" onclick="checkEgeSingle('ege3b','Текст публицистического стиля, основной тип речи — рассуждение.',this,'ege3b-fb','Верно! Авторская оценка, образность, рассуждение о технике Чехова — всё это признаки публицистического стиля. Преобладает рассуждение.')">
+        <span class="ege-opt-num">3</span>Текст официально-делового стиля, основной тип речи — повествование.
+      </div>
+      <div class="ege-option" onclick="checkEgeSingle('ege3b','Текст публицистического стиля, основной тип речи — рассуждение.',this,'ege3b-fb','Верно! Авторская оценка, образность, рассуждение о технике Чехова — всё это признаки публицистического стиля. Преобладает рассуждение.')">
+        <span class="ege-opt-num">4</span>Текст художественного стиля, тип речи — повествование с элементами описания.
+      </div>
+    </div>
+    <div class="feedback" id="ege3b-fb"></div>
+  </div>
+</div>
+
+<!-- ===================== ДЕНЬ 4 ===================== -->
+<div class="panel" id="day4">
+  <div class="score-bar">
+    <div>
+      <div class="score-label">Баллы</div>
+      <div class="score-val" id="score4">0 / 3</div>
+    </div>
+    <div style="margin-left:auto;font-size:13px;color:var(--muted)">Формат ЕГЭ · Задание 3</div>
+  </div>
+  <h1>День 4 — Формат ЕГЭ</h1>
+  <p class="subtitle">Новый текст — продолжай тренироваться</p>
+
+  <div class="ege-text">
+    <p style="margin-bottom:8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-style:normal">(1) Человеческий мозг содержит около 86 миллиардов нейронов, каждый из которых способен образовывать тысячи синаптических связей. (2) Именно эта колоссальная сеть обеспечивает все когнитивные функции: память, мышление, речь, восприятие. (3) Нейропластичность — способность мозга перестраивать нейронные пути под влиянием опыта — является одним из ключевых механизмов обучения. (4) Исследования показывают, что интенсивная умственная деятельность способствует образованию новых синаптических контактов даже в зрелом возрасте. (5) Таким образом, обучение в течение всей жизни имеет выраженный нейробиологический эффект.</p>
+  </div>
+
+  <div class="ege-task">
+    <div class="ege-task-label">Задание 3А</div>
+    <div class="ege-q">Укажи <strong>все</strong> верные утверждения о данном тексте.</div>
+    <div class="ege-options" id="ege4a-opts">
+      <div class="ege-option" onclick="toggleEge('ege4a','1',this)">
+        <span class="ege-opt-num">1</span>Текст относится к научному стилю: используются термины, объективное изложение, логичность.
+      </div>
+      <div class="ege-option" onclick="toggleEge('ege4a','2',this)">
+        <span class="ege-opt-num">2</span>В тексте преобладает тип речи — рассуждение: автор доказывает тезис о нейропластичности.
+      </div>
+      <div class="ege-option" onclick="toggleEge('ege4a','3',this)">
+        <span class="ege-opt-num">3</span>В предложении 3 содержится уточняющий оборот, раскрывающий значение термина «нейропластичность».
+      </div>
+      <div class="ege-option" onclick="toggleEge('ege4a','4',this)">
+        <span class="ege-opt-num">4</span>Текст публицистического стиля: автор обращается к широкой аудитории и выражает личное мнение.
+      </div>
+      <div class="ege-option" onclick="toggleEge('ege4a','5',this)">
+        <span class="ege-opt-num">5</span>Слово «колоссальная» в предложении 2 является термином научного стиля.
+      </div>
+    </div>
+    <button class="check-btn" onclick="checkEge('ege4a',['1','2','3'],'ege4a-fb')">Проверить</button>
+    <div class="feedback" id="ege4a-fb"></div>
+  </div>
+
+  <div class="ege-task">
+    <div class="ege-task-label">Задание 3Б</div>
+    <div class="ege-q">В каком предложении текста присутствует уточняющий член предложения? Укажи номер предложения.</div>
+    <div class="ege-options">
+      <div class="ege-option" onclick="checkEgeSingle('ege4b','Предложение 3',this,'ege4b-fb','Верно! В предложении 3 уточняющий оборот «способность мозга перестраивать нейронные пути под влиянием опыта» раскрывает содержание термина «нейропластичность». Уточняющие члены НЕ расширяют объём слова, а конкретизируют его.')">
+        <span class="ege-opt-num">1</span>Предложение 1
+      </div>
+      <div class="ege-option" onclick="checkEgeSingle('ege4b','Предложение 3',this,'ege4b-fb','Верно! В предложении 3 уточняющий оборот «способность мозга перестраивать нейронные пути под влиянием опыта» раскрывает содержание термина «нейропластичность». Уточняющие члены НЕ расширяют объём слова, а конкретизируют его.')">
+        <span class="ege-opt-num">2</span>Предложение 2
+      </div>
+      <div class="ege-option" onclick="checkEgeSingle('ege4b','Предложение 3',this,'ege4b-fb','Верно! В предложении 3 уточняющий оборот «способность мозга перестраивать нейронные пути под влиянием опыта» раскрывает содержание термина «нейропластичность». Уточняющие члены НЕ расширяют объём слова, а конкретизируют его.')">
+        <span class="ege-opt-num">3</span>Предложение 3
+      </div>
+      <div class="ege-option" onclick="checkEgeSingle('ege4b','Предложение 3',this,'ege4b-fb','Верно! В предложении 3 уточняющий оборот «способность мозга перестраивать нейронные пути под влиянием опыта» раскрывает содержание термина «нейропластичность». Уточняющие члены НЕ расширяют объём слова, а конкретизируют его.')">
+        <span class="ege-opt-num">4</span>Предложение 5
+      </div>
+    </div>
+    <div class="feedback" id="ege4b-fb"></div>
+  </div>
+
+  <div class="ege-task">
+    <div class="ege-task-label">Задание 3В ★ Повышенный уровень</div>
+    <div class="ege-q">Прочитай утверждение и определи, верно ли оно:<br><em>«В данном тексте инфинитивы глаголов (перестраивать, образовывать) придают изложению обобщённый, отвлечённый характер, что характерно для научного стиля.»</em></div>
+    <div class="ege-options">
+      <div class="ege-option" onclick="checkEgeSingle('ege4c','Верно',this,'ege4c-fb','Верно! Инфинитив выражает отвлечённое действие без привязки к лицу и времени — это типичная черта научного стиля. Именно инфинитив придаёт формулировкам обобщённость.')">
+        <span class="ege-opt-num">1</span>Верно
+      </div>
+      <div class="ege-option" onclick="checkEgeSingle('ege4c','Верно',this,'ege4c-fb','Верно! Инфинитив выражает отвлечённое действие без привязки к лицу и времени — это типичная черта научного стиля. Именно инфинитив придаёт формулировкам обобщённость.')">
+        <span class="ege-opt-num">2</span>Неверно — инфинитив характерен только для разговорного стиля
+      </div>
+      <div class="ege-option" onclick="checkEgeSingle('ege4c','Верно',this,'ege4c-fb','Верно! Инфинитив выражает отвлечённое действие без привязки к лицу и времени — это типичная черта научного стиля. Именно инфинитив придаёт формулировкам обобщённость.')">
+        <span class="ege-opt-num">3</span>Неверно — инфинитив в науке не используется
+      </div>
+      <div class="ege-option" onclick="checkEgeSingle('ege4c','Верно',this,'ege4c-fb','Верно! Инфинитив выражает отвлечённое действие без привязки к лицу и времени — это типичная черта научного стиля. Именно инфинитив придаёт формулировкам обобщённость.')">
+        <span class="ege-opt-num">4</span>Утверждение не имеет смысла
+      </div>
+    </div>
+    <div class="feedback" id="ege4c-fb"></div>
+  </div>
+</div>
+
+<!-- ===================== ИТОГ ===================== -->
+<div id="total-bar" style="
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #13141a;
+  border-top: 2px solid #2a2d3a;
+  padding: 12px 48px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  z-index: 200;
+  flex-wrap: wrap;
+">
+  <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8b8fa8;font-family:'IBM Plex Mono',monospace">Общий счёт</div>
+
+  <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;color:#e8c96b;font-family:'IBM Plex Mono',monospace;opacity:.7">Д1</span>
+      <span id="mini1" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#e8c96b">0/6</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;color:#7eb8f7;font-family:'IBM Plex Mono',monospace;opacity:.7">Д2</span>
+      <span id="mini2" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#7eb8f7">0/5</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;color:#a78bfa;font-family:'IBM Plex Mono',monospace;opacity:.7">Д3</span>
+      <span id="mini3" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#a78bfa">0/2</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;color:#6ee7b7;font-family:'IBM Plex Mono',monospace;opacity:.7">Д4</span>
+      <span id="mini4" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#6ee7b7">0/3</span>
+    </div>
+  </div>
+
+  <div style="margin-left:auto;display:flex;align-items:baseline;gap:8px">
+    <span style="font-size:11px;color:#8b8fa8;text-transform:uppercase;letter-spacing:.08em">Итого</span>
+    <span id="total-correct" style="font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;color:#f9d771">0</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;color:#8b8fa8">/ 16</span>
+  </div>
+</div>
+
+<!-- spacer so content isn't hidden behind fixed bar -->
+<div style="height:64px"></div>
+
+<script>
+// ---- REGISTRATION ----
+let studentName = '';
+
+function startSession() {
+  const name = document.getElementById('reg-name').value.trim();
+  const cls  = document.getElementById('reg-class').value.trim();
+  if (!name) { document.getElementById('reg-name').focus(); return; }
+  studentName = name + (cls ? ' · ' + cls : '');
+  document.getElementById('reg-overlay').style.display = 'none';
+  document.getElementById('submit-name-label').textContent = studentName;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('reg-overlay').style.display !== 'none') startSession();
+});
+
+// ---- NOTION SUBMIT ----
+const NOTION_DB = '2403f6de-6e92-447c-9264-7b21efc7c766';
+
+function getLabel(t) {
+  if (t >= 13) return 'Отлично 13-16';
+  if (t >= 9)  return 'Хорошо 9-12';
+  return 'Нужна работа 0-8';
+}
+
+function showSubmitCard() {
+  document.getElementById('submit-wrap').style.display = 'block';
+  document.getElementById('submit-wrap').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+// ════════════════════════════════════════
+// НАСТРОЙКА TELEGRAM
+// Вставьте ваш токен и chat_id ниже:
+const TG_TOKEN   = '7813524187:AAG96ICwtP2wmMOTKmN05WmWrV_YXKeWd_U';
+const TG_CHAT_ID = '513804';
+// ════════════════════════════════════════
+
+function bar(val, max) {
+  const filled = Math.round((val / max) * 8);
+  return '█'.repeat(filled) + '░'.repeat(8 - filled);
+}
+
+function getEmoji(total) {
+  if (total >= 13) return '🟢 Отлично';
+  if (total >= 9)  return '🔵 Хорошо';
+  return '🔴 Нужна работа';
+}
+
+async function sendToNotion() {
+  const btn    = document.getElementById('submit-btn');
+  const status = document.getElementById('submit-status');
+  btn.disabled = true;
+  btn.textContent = 'Отправляю…';
+  status.style.display = 'block';
+  status.style.color = 'var(--muted)';
+  status.textContent = 'Отправляю в Telegram…';
+
+  if (TG_TOKEN === 'ВСТАВЬТЕ_ТОКЕН_СЮДА') {
+    status.style.color = 'var(--danger)';
+    status.textContent = '✗ Токен не задан — см. инструкцию в файле';
+    btn.disabled = false;
+    btn.textContent = 'Отправить →';
+    return;
+  }
+
+  const total = Object.values(scores).reduce((a,d) => a + d.correct, 0);
+  const today = new Date().toLocaleDateString('ru-RU');
+
+  const text =
+`📊 <b>Новый результат!</b>
+
+👤 <b>${studentName}</b>
+📅 ${today}
+
+<code>День 1  ${bar(scores.day1.correct,6)}  ${scores.day1.correct}/6</code>
+<code>День 2  ${bar(scores.day2.correct,5)}  ${scores.day2.correct}/5</code>
+<code>День 3  ${bar(scores.day3.correct,2)}  ${scores.day3.correct}/2</code>
+<code>День 4  ${bar(scores.day4.correct,3)}  ${scores.day4.correct}/3</code>
+
+⭐ <b>Итого: ${total} / 16</b>
+${getEmoji(total)}`;
+
+  try {
+    const url = `https://api.telegram.org/bot${TG_TOKEN}/sendMessage`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        chat_id: TG_CHAT_ID,
+        text,
+        parse_mode: 'HTML'
+      })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.description || 'Ошибка Telegram');
+
+    status.style.color = 'var(--success)';
+    status.textContent = '✓ Результат отправлен в Telegram!';
+    btn.textContent = 'Отправлено ✓';
+  } catch (err) {
+    status.style.color = 'var(--danger)';
+    status.textContent = '✗ Ошибка: ' + err.message;
+    btn.disabled = false;
+    btn.textContent = 'Повторить';
+  }
+}
+
+function closeModal() {
+  document.getElementById('copy-modal').style.display = 'none';
+}
+
+// ---- SCORES ----
+const scores = {
+  day1: {correct:0, total:6},
+  day2: {correct:0, total:5},
+  day3: {correct:0, total:2},
+  day4: {correct:0, total:3}
+};
+
+function updateScore(day) {
+  const s = scores[day];
+  const n = day.replace('day','');
+  document.getElementById('score'+n).textContent = s.correct + ' / ' + s.total;
+  document.getElementById('mini'+n).textContent = s.correct + '/' + s.total;
+  // update total
+  const totalCorrect = Object.values(scores).reduce((a,d) => a + d.correct, 0);
+  document.getElementById('total-correct').textContent = totalCorrect;
+  // show submit card after student has answered at least one question
+  showSubmitCard();
+}
+
+// ---- DAY 1 & 2 single-choice ----
+function checkQ(cardId, correct, clickedEl, fbId, explanation) {
+  const card = document.getElementById(cardId);
+  if (card.classList.contains('answered')) return;
+  card.classList.add('answered');
+
+  const opts = clickedEl.closest('.options').querySelectorAll('.option');
+  opts.forEach(o => {
+    o.classList.add('disabled');
+    if (o.textContent.trim() === correct) o.classList.add('reveal');
+  });
+
+  const isCorrect = clickedEl.textContent.trim() === correct;
+  clickedEl.classList.remove('reveal');
+  clickedEl.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) clickedEl.closest('.options').querySelector('.option.reveal')?.classList.remove('reveal', 'disabled'), clickedEl.closest('.options').querySelector('[class*="reveal"]');
+
+  const fb = document.getElementById(fbId);
+  fb.textContent = isCorrect ? '✓ ' + explanation : '✗ Неверно. Правильный ответ: ' + correct + '. ' + explanation;
+  fb.classList.add('show');
+
+  // score
+  const day = cardId.startsWith('d1') ? 'day1' : 'day2';
+  if (isCorrect) { scores[day].correct++; updateScore(day); }
+}
+
+// ---- EGE multi-select ----
+const egeSelected = {};
+
+function toggleEge(groupId, val, el) {
+  if (!egeSelected[groupId]) egeSelected[groupId] = new Set();
+  if (el.classList.contains('disabled')) return;
+  if (egeSelected[groupId].has(val)) {
+    egeSelected[groupId].delete(val);
+    el.style.borderColor = '';
+    el.style.background = '';
+    el.style.color = '';
+  } else {
+    egeSelected[groupId].add(val);
+    el.style.borderColor = 'var(--accent1)';
+    el.style.background = 'rgba(232,201,107,.08)';
+    el.style.color = 'var(--accent1)';
+  }
+}
+
+function checkEge(groupId, correctArr, fbId) {
+  const selected = egeSelected[groupId] || new Set();
+  const opts = document.getElementById(groupId+'-opts').querySelectorAll('.ege-option');
+  opts.forEach((o, i) => {
+    const num = String(i+1);
+    o.style.borderColor = '';
+    o.style.background = '';
+    o.style.color = '';
+    o.classList.add('disabled');
+    if (correctArr.includes(num)) { o.classList.add('reveal'); }
+    if (selected.has(num) && correctArr.includes(num)) { o.classList.remove('reveal'); o.classList.add('correct'); }
+    if (selected.has(num) && !correctArr.includes(num)) { o.classList.add('wrong'); }
+  });
+
+  const correct = correctArr.every(v => selected.has(v)) && selected.size === correctArr.length;
+  const fb = document.getElementById(fbId);
+  fb.textContent = correct
+    ? '✓ Верно! Правильные ответы: ' + correctArr.join(', ')
+    : '✗ Не совсем. Правильные ответы: ' + correctArr.join(', ');
+  fb.classList.add('show');
+  document.querySelector(`button[onclick*="${groupId}"]`).disabled = true;
+
+  // score tracking
+  const day = groupId.startsWith('ege3') ? 'day3' : 'day4';
+  if (correct) { scores[day].correct++; updateScore(day); }
+}
+
+// ---- EGE single ----
+const egeSingleDone = {};
+
+function checkEgeSingle(groupId, correct, clickedEl, fbId, explanation) {
+  if (egeSingleDone[groupId]) return;
+  egeSingleDone[groupId] = true;
+  const opts = clickedEl.closest('.ege-options').querySelectorAll('.ege-option');
+  const clickedText = clickedEl.querySelector('span').nextSibling?.textContent?.trim() || clickedEl.textContent.trim();
+  const isCorrect = clickedText === correct || clickedEl.textContent.includes(correct.split(' ')[1]);
+
+  opts.forEach(o => {
+    o.classList.add('disabled');
+    o.style.borderColor = '';
+    o.style.background = '';
+    o.style.color = '';
+    const t = o.textContent.trim();
+    if (t.includes(correct) || t === correct) o.classList.add('reveal');
+  });
+
+  clickedEl.classList.remove('reveal');
+  // re-check by correct substring
+  const actualCorrect = [...opts].find(o => o.textContent.includes(correct));
+  if (actualCorrect) { actualCorrect.classList.remove('reveal'); actualCorrect.classList.add('correct'); }
+  if (!clickedEl.textContent.includes(correct)) clickedEl.classList.add('wrong');
+
+  const fb = document.getElementById(fbId);
+  const answered = clickedEl.textContent.includes(correct);
+  fb.textContent = answered ? '✓ ' + explanation : '✗ Неверно. ' + explanation;
+  fb.classList.add('show');
+
+  // score tracking
+  const day = groupId.startsWith('ege3') ? 'day3' : 'day4';
+  if (answered) { scores[day].correct++; updateScore(day); }
+}
+
+// ---- NAV ----
+function showDay(n, tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('day'+n).classList.add('active');
+  tab.classList.add('active');
+}
+</script>
+
+<!-- COPY MODAL -->
+<div id="copy-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;padding:24px">
+  <div style="background:#1e2029;border:1px solid #2a2d3a;border-radius:14px;padding:36px;max-width:460px;width:100%;text-align:center">
+    <div style="font-size:32px;margin-bottom:12px">✅</div>
+    <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:8px">Результат скопирован!</div>
+    <p style="font-size:13px;color:#8b8fa8;margin-bottom:20px;line-height:1.6">Отправь это сообщение учителю<br>в чат или мессенджер.</p>
+    <pre id="copy-text" style="background:#13141a;border:1px solid #2a2d3a;border-radius:8px;padding:16px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#e8eaf0;text-align:left;margin-bottom:20px;white-space:pre-wrap;line-height:1.7"></pre>
+    <button onclick="closeModal()" style="padding:11px 28px;background:#e8c96b;color:#0e0f14;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">Закрыть</button>
+  </div>
+</div>
+</body>
+</html>
